@@ -24,9 +24,9 @@ int isFileOrDir(char* path);
 int list_files(int argCount, char**argVector);
 int copy_file(char **argVector);
 int remove_file(char **argVector);
-
+int move_file(char **argv);
 /* 
-main 
+  main 
 */
 int main(void)
 {
@@ -90,6 +90,19 @@ int main(void)
       } else {
         executionResult = remove_file(argVector);
         printf("result of rm: %d\n", executionResult);
+      }
+      continue;
+    }
+
+    /*
+      rm
+    */
+    if (!strcmp(argVector[0], "mv")){
+      if (argCount != 3) { // number of args doesn't match
+        printf("usage of rm commend: mv [source file] [destination file]\n");
+      } else {
+        executionResult = move_file(argVector);
+        printf("result of mv: %d\n", executionResult);
       }
       continue;
     }
@@ -234,7 +247,7 @@ int remove_file(char **argVector)
 {
   if (isFileOrDir(argVector[1]) != ARG_FILE)
   {
-    perror("First argument must be a existing file. Copy not executed.\n");
+    perror("First argument must be a existing file. Remove not executed.\n");
     return 1;
   }
 
@@ -247,6 +260,25 @@ int remove_file(char **argVector)
   else if( nResult == -1 )
   {
     perror("rm failed...\n");
+    return 1;
+  }
+  return 0;
+}
+
+/*
+  move file
+*/
+int move_file(char **argVector)
+{
+  if(copy_file(argVector) != 0)
+  {
+    perror("mv error: copy of source file failed...\n");
+    return 1;
+  }
+  strcpy(argVector[2], argVector[1]);
+  if(remove_file(argVector) != 0)
+  {
+    perror("mv error: remove of source file failed...\n");
     return 1;
   }
   return 0;
