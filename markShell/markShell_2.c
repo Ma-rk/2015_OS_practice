@@ -23,6 +23,7 @@ int isFileOrDir(char* path);
 
 int list_files(int argCount, char**argVector);
 int copy_file(char **argVector);
+int remove_file(char **argVector);
 
 /* 
 main 
@@ -80,9 +81,20 @@ int main(void)
       continue;
     }
 
-    printf("%s\n", "wrong command...");
+    /*
+      rm
+    */
+    if (!strcmp(argVector[0], "rm")){
+      if (argCount != 2) { // number of args doesn't match
+        printf("usage of rm commend: rm [destination file]\n");
+      } else {
+        executionResult = remove_file(argVector);
+        printf("result of rm: %d\n", executionResult);
+      }
+      continue;
+    }
 
-    //print_cmd_argv(argCount, argVector);
+    printf("%s\n", "wrong command...");
   }
   
   return 0;
@@ -185,7 +197,7 @@ int copy_file(char **argVector)
 
   if(arg1 != ARG_FILE)
   {
-    perror("argVector[1] must be a existing file. Copy not executed.\n");
+    perror("First argument must be a existing file. Copy not executed.\n");
     return 1;
   }
 
@@ -212,5 +224,30 @@ int copy_file(char **argVector)
     close(in_fd);
     close(out_fd);
   printf("end of cp...\n");
+  return 0;
+}
+
+/*
+  remove file
+*/
+int remove_file(char **argVector)
+{
+  if (isFileOrDir(argVector[1]) != ARG_FILE)
+  {
+    perror("First argument must be a existing file. Copy not executed.\n");
+    return 1;
+  }
+
+  int nResult = remove(argVector[1]);
+ 
+  if( nResult == 0 )
+  {
+    printf("rm succeed!!\n" );
+  }
+  else if( nResult == -1 )
+  {
+    perror("rm failed...\n");
+    return 1;
+  }
   return 0;
 }
