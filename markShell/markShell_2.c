@@ -27,6 +27,7 @@ int remove_file(char **argVector);
 int move_file(char **argVector);
 int change_directory(char **argVector);
 int print_working_directory(void);
+int make_directory(char **argv);
 /* 
   main 
 */
@@ -131,6 +132,19 @@ int main(void)
       } else {
         executionResult = print_working_directory();
         printf("result of pwd: %d\n", executionResult);
+      }
+      continue;
+    }
+
+    /*
+      mkdir
+    */
+    if (!strcmp(argVector[0], "mkdir")){
+      if (argCount != 2) { // number of args doesn't match
+        printf("usage of mkdir commend: mkdir [new directory name]\n");
+      } else {
+        executionResult = make_directory(argVector);
+        printf("result of mkdir: %d\n", executionResult);
       }
       continue;
     }
@@ -278,13 +292,13 @@ int remove_file(char **argVector)
     return 1;
   }
 
-  int nResult = remove(argVector[1]);
+  int rmResult = remove(argVector[1]);
  
-  if( nResult == 0 )
+  if( rmResult == 0 )
   {
     printf("rm succeed!!\n" );
   }
-  else if( nResult == -1 )
+  else if( rmResult == -1 )
   {
     perror("rm failed...\n");
     return 1;
@@ -321,13 +335,13 @@ int change_directory(char **argVector)
     perror("cd error: wrong path...\n");
     return 1;
   }
-  int nResult = chdir(argVector[1]);
+  int cdResult = chdir(argVector[1]);
 
-  if( nResult == 0 )
+  if( cdResult == 0 )
   {
     print_working_directory();
   }
-  else if( nResult == -1 )
+  else if( cdResult == -1 )
   {
     perror("failed to change directory...\n");
   }
@@ -342,5 +356,29 @@ int print_working_directory(void)
   char pwd[255];
   getcwd(pwd, 255);
   printf("currently working on [%s]\n", pwd);
+  return 0;
+}
+
+/*
+  make_directory
+*/
+int make_directory(char **argVector)
+{
+  int checkArg = isFileOrDir(argVector[1]);
+  if (checkArg == ARG_DIR || checkArg == ARG_FILE)
+  {
+    perror("mkdir error: There is aleady same name of file or directory...\n");
+    return 1;
+  }
+
+  int mkdirResult = mkdir(argVector[1], 0755);
+  if(mkdirResult == 0)
+  {
+    printf("mkdir succeed.\n");
+  }
+  else if(mkdirResult == -1)
+  {
+    perror("mkdir failed...\n");
+  }
   return 0;
 }
