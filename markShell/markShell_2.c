@@ -64,10 +64,12 @@ int main(void)
       ls
     */
     if (!strcmp(argVector[0], "ls")){
-      if (argCount > 2) { // too many args
+      if (argCount > 3) { // too many args
         printf("usage of ls commend: ls [path]\n");
-      } else {
+      } else if ((argCount <= 2) || strcmp(argVector[1], ">") == 0){
         executionResult = list_files(argCount, argVector);
+      } else {
+
       }
       continue;
     }
@@ -218,7 +220,8 @@ int list_files(int argCount, char **argVector)
   DIR *dp;
   struct dirent *d_entry;
   char pathArg[MAX_ARG_LENGTH] = ".";
-  int intFileOrDir;
+  int intFileOrDir, fd, temp_stdout;
+
   if (argCount == 2)
   {
     intFileOrDir = isFileOrDir(argVector[1]);
@@ -238,6 +241,13 @@ int list_files(int argCount, char **argVector)
     }
   }
 
+  if(argCount == 3){
+    fd = creat(argVector[2], 0644);
+    temp_stdout = dup(1);
+    dup2(fd, 1);
+    close(fd);
+  }
+
   dp = opendir(pathArg);
   if (dp == NULL)
   {
@@ -252,6 +262,9 @@ int list_files(int argCount, char **argVector)
     d_entry = readdir(dp);
   }
   closedir(dp);
+
+  dup2(temp_stdout, 1);
+
   return 0;
 }
 
