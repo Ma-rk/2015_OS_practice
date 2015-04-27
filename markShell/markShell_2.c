@@ -27,7 +27,8 @@ int remove_file(char **argVector);
 int move_file(char **argVector);
 int change_directory(char **argVector);
 int print_working_directory(void);
-int make_directory(char **argv);
+int make_directory(char **argVector);
+int remove_directory(char **argVector);
 /* 
   main 
 */
@@ -145,6 +146,19 @@ int main(void)
       } else {
         executionResult = make_directory(argVector);
         printf("result of mkdir: %d\n", executionResult);
+      }
+      continue;
+    }
+
+    /*
+      rmdir
+    */
+    if (!strcmp(argVector[0], "rmdir")){
+      if (argCount != 2) { // number of args doesn't match
+        printf("usage of rmdir commend: rmdir [existing directory name]\n");
+      } else {
+        executionResult = remove_directory(argVector);
+        printf("result of rmdir: %d\n", executionResult);
       }
       continue;
     }
@@ -379,6 +393,30 @@ int make_directory(char **argVector)
   else if(mkdirResult == -1)
   {
     perror("mkdir failed...\n");
+  }
+  return 0;
+}
+
+/*
+  remove_directory
+*/
+int remove_directory(char **argVector)
+{
+  int checkArg = isFileOrDir(argVector[1]);
+  if (checkArg != ARG_DIR)
+  {
+    perror("rmdir error: There is no such a directory...\n");
+    return 1;
+  }
+  int rmdirResult = rmdir(argVector[1]);
+
+  if( rmdirResult == 0 )
+  {
+      printf("rmdir succeed.\n");
+  }
+  else if( rmdirResult == -1 )
+  {
+      perror("rmdir failed...\n" );
   }
   return 0;
 }
