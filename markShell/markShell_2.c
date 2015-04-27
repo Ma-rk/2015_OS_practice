@@ -24,7 +24,9 @@ int isFileOrDir(char* path);
 int list_files(int argCount, char**argVector);
 int copy_file(char **argVector);
 int remove_file(char **argVector);
-int move_file(char **argv);
+int move_file(char **argVector);
+int change_directory(char **argVector);
+int print_working_directory(void);
 /* 
   main 
 */
@@ -95,7 +97,7 @@ int main(void)
     }
 
     /*
-      rm
+      mv
     */
     if (!strcmp(argVector[0], "mv")){
       if (argCount != 3) { // number of args doesn't match
@@ -107,9 +109,34 @@ int main(void)
       continue;
     }
 
+    /*
+      mv
+    */
+    if (!strcmp(argVector[0], "cd")){
+      if (argCount != 2) { // number of args doesn't match
+        printf("usage of cd commend: cd [destination directory]\n");
+      } else {
+        executionResult = change_directory(argVector);
+        printf("result of cd %d\n", executionResult);
+      }
+      continue;
+    }
+
+    /*
+      pwd
+    */
+    if (!strcmp(argVector[0], "pwd")){
+      if (argCount != 1) { // number of args doesn't match
+        printf("usage of pwd commend: pwd\n");
+      } else {
+        executionResult = print_working_directory();
+        printf("result of pwd: %d\n", executionResult);
+      }
+      continue;
+    }
+
     printf("%s\n", "wrong command...");
   }
-  
   return 0;
 }
 
@@ -281,5 +308,39 @@ int move_file(char **argVector)
     perror("mv error: remove of source file failed...\n");
     return 1;
   }
+  return 0;
+}
+
+/*
+  change_directory
+*/
+int change_directory(char **argVector)
+{
+  if (isFileOrDir(argVector[1]) != ARG_DIR)
+  {
+    perror("cd error: wrong path...\n");
+    return 1;
+  }
+  int nResult = chdir(argVector[1]);
+
+  if( nResult == 0 )
+  {
+    print_working_directory();
+  }
+  else if( nResult == -1 )
+  {
+    perror("failed to change directory...\n");
+  }
+  return 0;
+}
+
+/*
+  print_working_directory
+*/
+int print_working_directory(void)
+{
+  char pwd[255];
+  getcwd(pwd, 255);
+  printf("currently working on [%s]\n", pwd);
   return 0;
 }
