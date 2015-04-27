@@ -1,7 +1,11 @@
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 #include <dirent.h>
 #include <sys/stat.h>
+#include <sys/types.h>
+#include <fcntl.h>
+
 /* constants  */
 #define MAX_CMD_LENGTH 1024
 #define MAX_ARG_LENGTH 128 
@@ -18,6 +22,7 @@ void print_cmd_argv(int argCount, char ** argVector);
 int isFileOrDir(char* path);
 
 int list_files(int argCount, char**argVector);
+int copy_file(char **argVector);
 
 /* 
 main 
@@ -54,17 +59,30 @@ int main(void)
       ls
     */
     if (!strcmp(argVector[0], "ls")){
-      if (argCount > 2) {
-        // too many args
+      if (argCount > 2) { // too many args
         printf("usage of ls commend: ls [path]\n");
       } else {
-        if((executionResult = list_files(argCount, argVector)) != 0)
-          return 1;
+        executionResult = list_files(argCount, argVector);
+      }
+      continue;
+    }
+
+    /*
+      cp
+    */
+    if (!strcmp(argVector[0], "cp")){
+      if (argCount != 3) { // number of args doesn't match
+        printf("usage of cp commend: cp [source file] [destination file]\n");
+      } else {
+        executionResult = copy_file(argVector);
+        printf("result of cp: %d\n", executionResult);
       }
       continue;
     }
 
     printf("%s\n", "wrong command...");
+
+    //print_cmd_argv(argCount, argVector);
   }
   
   return 0;
@@ -84,6 +102,31 @@ void parse_cmdLine(char *cmdLine, int *argCount, char **argVector)
     count++;
   }
   * argCount = count;
+}
+
+/*
+  check the existence of file or directory
+*/
+int isFileOrDir(char* path)
+{
+  struct stat buf;
+  int isFile;
+  if(stat(path, &buf) == 0)
+  {
+    if(buf.st_mode & S_IFDIR)
+    {
+      isFile = ARG_DIR;
+    }
+    else
+    {
+      isFile = ARG_FILE;
+    }
+  }
+  else
+  {
+    isFile = ARG_WRONG;
+  }
+  return isFile;
 }
 
 /*
@@ -132,24 +175,42 @@ int list_files(int argCount, char **argVector)
   return 0;
 }
 
-int isFileOrDir(char* path)
+/*
+  copy_file
+*/
+int copy_file(char **argVector)
 {
-  struct stat buf;
-  int isFile;
-  if(stat(path, &buf) == 0)
+  int arg1 = isFileOrDir(argVector[1]);
+  int arg2 = isFileOrDir(argVector[2]);
+
+  if(arg1 != ARG_FILE)
   {
-    if(buf.st_mode & S_IFDIR)
-    {
-       isFile = ARG_DIR;
-    }
-    else
-    {
-       isFile = ARG_FILE;
-    }
+    perror("argVector[1] must be a existing file. Copy not executed.\n");
+    return 1;
   }
-  else
+
+  if(arg2 == ARG_FILE || arg2 == ARG_DIR)
   {
-       isFile = ARG_WRONG;
+    perror("There is aleady a file or directory named argVector[1]. Copy not executed.\n");
+    return 1;
   }
-  return isFile;
+
+  int in_fd, out_fd, rd_count;
+  char buffer[4096];
+  if ((in_fd = open(argVector[1], O_RDONLY)) < 0)
+    return 1;
+  if ((out_fd = creat(argVector[2], 0644)) < 0)
+    return 1;
+  while (1) {
+    if ((rd_count = read(in_fd, buffer, 4096)) <= 0)
+      break;
+    if (write(out_fd, buffer, rd_count) <= 0)
+      return 1;
+  }
+  if (rd_count < 0)
+    return 1;
+    close(in_fd);
+    close(out_fd);
+  printf("end of cp...\n");
+  return 0;
 }
